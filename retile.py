@@ -1,34 +1,36 @@
 import numpy as np
 import ezomero as ez
+from ezomero import rois
+from math import ceil
+TILE_DIM = 5000 #dimension of resulting tiles
 
+def main():
+    conn = ez.connect(group="Neurobiology Imaging Facility")
+    image = conn.getObject("Image", 1654601)
 
-conn = ez.connect()
-image = conn.getObject("Image", 1654601)
+    pixels = image.getPrimaryPixels()
+    d1 = int(image.getSizeX())
+    d2 = int(image.getSizeY())
+    col, row = nearestMultipleOf(TILE_DIM, d1, d2)
+    rect_list = roiTiler(TILE_DIM, row, col)
+    ez.post_roi(conn,1654601, rect_list, "test roi1")
+    
 
-pixels = image.getPrimaryPixels()
-d1 = int(image.getSizeX())
-d2 = int(image.getSizeY())
+    ##row, col = nearestMultipleOf(TILE_DIMENSION, d1, d2)
 
-TILE_DIMENSION = 5000
+    conn.close()
+
 
 def nearestMultipleOf(tile_dim, dim1, dim2):
-    return int(dim1/tile_dim), int(dim2/tile_dim)
+    return int(ceil(dim1/tile_dim)), int(ceil(dim2/tile_dim))
 
-row, col = nearestMultipleOf(TILE_DIMENSION, d1, d2)
-
-##plane = pixels.getPlane(0,0,0)
-
-def arrayBreak2d(tile_dim, arr, row, col):
-    array_list = []
+def roiTiler(tile_dim, row, col):
+    rect_list = []
     for y in range(0, row):
         for x in range(0, col):
-            if x != 0:
-                array_list.append(arr[:tile_dim,:tile_dim])
-            else:
-                array_list.append(arr[x*tile_dim:(x+1)*tile_dim,y*tile_dim:(y+1)*tile_dim])
-    return array_list
+            rect_list.append(rois.Rectangle(x*TILE_DIM, y*TILE_DIM, TILE_DIM, TILE_DIM, label="row: %d col: %d" % (y, x)))
+    return rect_list
 
-##y
-#array_list = arrayBreak2d(TILE_DIMENSION, plane, row, col)
 
-conn.close()
+if __name__ == "__main__":
+    main()
