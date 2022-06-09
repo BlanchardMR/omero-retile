@@ -1,6 +1,7 @@
 import numpy as np
 from math import ceil
 from ezomero import rois
+import ezomero as ez
 import time
 
 def nearestMultipleOf(tile_dim, dim1, dim2) -> tuple:
@@ -33,7 +34,7 @@ def getProjectImages(conn, id_list) -> list:
     return imagelist
 
 #buid a dict of all images with required rows and columns 
-def getDimensionMap(conn, id_list, tile_dim) -> dict:
+def getDimensionMap(id_list, tile_dim) -> dict:
     imagedict = {}
     for id in id_list:
         col, row = nearestMultipleOf(tile_dim, id.getSizeX(), id.getSizeY())
@@ -41,3 +42,11 @@ def getDimensionMap(conn, id_list, tile_dim) -> dict:
         imagedict.update(key_val)
     return imagedict
     
+def breakUpImage(conn, imagedict, tile_dim):
+    for key, value in imagedict.items():
+        image = conn.getObject("Image", key)
+        for y in range(value[1]):
+            for x in range(value[0]):
+                tile = getTile(image.getPrimaryPixels(), x, y, tile_dim)
+                tile = np.expand_dims(tile, axis=(2,3,4))
+                ez.post_image(conn, tile, "%s row: %d col: %d" % (key, y, x), key, channel_list=[0] )

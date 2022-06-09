@@ -1,10 +1,10 @@
 import numpy as np
 import ezomero as ez
-from utils import getTile, roiTiler, nearestMultipleOf, getProjectPixels, getDimensionMap,getProjectImages
+from utils import getTile, roiTiler, breakUpImage,nearestMultipleOf, getProjectPixels, getDimensionMap,getProjectImages
 from ezomero import rois
 from math import ceil
 
-TILE_DIM = 5000 #dimension of resulting tiles
+TILE_DIM = 100 #dimension of resulting tiles
 PROJECT_ID = 9152
 
 def main():
@@ -12,7 +12,8 @@ def main():
     image_ids = ez.get_image_ids(conn, project=PROJECT_ID)
     pixellist = getProjectPixels(conn, image_ids)
     imagelist = getProjectImages(conn, image_ids)
-    imagedict = getDimensionMap(conn, imagelist, TILE_DIM)
+    imagedict = getDimensionMap(imagelist, TILE_DIM)
+    breakUpImage(conn, imagedict, TILE_DIM)
         
 
     # image = conn.getObject("Image", 1654601)
