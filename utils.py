@@ -4,8 +4,8 @@ from ezomero import rois
 import ezomero as ez
 import time
 
-def nearestMultipleOf(tile_dim, dim1, dim2) -> tuple:
-    return int(ceil(dim1/tile_dim)), int(ceil(dim2/tile_dim))
+def nearestMultipleOf(tile_dim, col, row) -> tuple:
+    return int(ceil(col/tile_dim)), int(ceil(row/tile_dim))
 
 def roiTiler(tile_dim, row, col,) -> list:
     rect_list = []
@@ -15,7 +15,7 @@ def roiTiler(tile_dim, row, col,) -> list:
     return rect_list
 
 #get tile segment of image
-def getTile(pixels, row, col, tile_dim) -> np.array:
+def get_tile(pixels, row, col, tile_dim) -> np.array:
     return pixels.getTile(0,0,0,(col*tile_dim,row*tile_dim,tile_dim,tile_dim))
 
 #get all pixel objects from project images
@@ -47,6 +47,6 @@ def breakUpImage(conn, imagedict, tile_dim):
         image = conn.getObject("Image", key)
         for y in range(value[1]):
             for x in range(value[0]):
-                tile = getTile(image.getPrimaryPixels(), x, y, tile_dim)
+                tile = get_tile(image.getPrimaryPixels(), x, y, tile_dim)
                 tile = np.expand_dims(tile, axis=(2,3,4))
                 ez.post_image(conn, tile, "%s row: %d col: %d" % (key, y, x), key, channel_list=[0] )
