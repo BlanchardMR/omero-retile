@@ -5,7 +5,7 @@ import ezomero as ez
 import time
 
 def nearestMultipleOf(tile_dim, col, row) -> tuple:
-    return int(ceil(col/tile_dim)), int(ceil(row/tile_dim))
+    return int(col/tile_dim), int(row/tile_dim)
 
 def roiTiler(tile_dim, row, col,) -> list:
     rect_list = []
@@ -15,8 +15,8 @@ def roiTiler(tile_dim, row, col,) -> list:
     return rect_list
 
 #get tile segment of image
-def get_tile(pixels, row, col, tile_dim) -> np.array:
-    return pixels.getTile(0,0,0,(col*tile_dim,row*tile_dim,tile_dim,tile_dim))
+def get_tile(pixels, row, col, tile_dim, z=0,c=0, t=0) -> np.array:
+    return pixels.getTile(z, c, t,(col*tile_dim,row*tile_dim,tile_dim,tile_dim))
 
 #get all pixel objects from project images
 def getProjectPixels(conn, id_list) -> list:
