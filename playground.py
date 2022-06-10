@@ -1,6 +1,6 @@
 import numpy as np
 import ezomero as ez
-from utils import get_tile, roiTiler, breakUpImage,nearestMultipleOf, getProjectPixels, getDimensionMap,getProjectImages
+from utils import get_tile, roiTiler, breakUpImage,tileMultiple, getProjectPixels, dimensionGridList,getProjectImages
 from ezomero import rois
 from math import ceil
 
@@ -16,12 +16,13 @@ d1 = image.getSizeX()
 print("dimension1: " + str(d1))
 d2 = image.getSizeY()
 print("dimension2: " + str(d2))
-cols, rows = nearestMultipleOf(TILE_DIM, d1, d2)
+cols, rows = tileMultiple(TILE_DIM, d1, d2)
 
 for y in range(rows):
     for x in range(cols):
         print("x: " + str(x) + " y:" + str(y))
         pixels = image.getPrimaryPixels()
+        print(type(pixels))
         tileR = get_tile(pixels, y, x, TILE_DIM, c=0)
         tileG = get_tile(pixels, y, x, TILE_DIM, c=1)
         tileB = get_tile(pixels, y, x, TILE_DIM, c=2)

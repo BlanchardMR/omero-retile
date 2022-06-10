@@ -45,7 +45,7 @@ def get_tile(pixels, row, col, tile_dim, z=0,c=0, t=0) -> np.array:
     
     Parameters
     ----------
-    pixels : <Omero.Pixel> ??? need to correct this
+    pixels : <omero.gateway._PixelsWrapper>
     row : int
     col : int
     tile_dim: int
@@ -70,7 +70,7 @@ def getProjectPixels(conn, id_list) -> list:
     
     Returns
     --------
-    list[<Omero.pixels>] ??? double check this object type
+    list[<omero.gateway._PixelsWrapper>] 
     """
     pixellist = []
     for id in id_list:
@@ -88,7 +88,7 @@ def getProjectImages(conn, id_list) -> list:
     
     Returns
     --------
-    lis[int]
+    list[<Omero.Image>]
     """
     imagelist = []
     for id in id_list:
@@ -96,12 +96,12 @@ def getProjectImages(conn, id_list) -> list:
     return imagelist
 
 
-def dimensionGridList(id_list, tile_dim) -> dict:
-    """ build dictionary of key: image id, value: (columns, rows)
+def dimensionGridList(image_list, tile_dim) -> dict:
+    """ build dictionary of key: image id, value: (<primaryPixels>,columns, rows)
     
     Parameters
     ----------
-    id_list = [int]
+    id_list = [<Omero.Image>]??? not sure is correct
     tile_dim = int
     
     Returns
@@ -109,12 +109,60 @@ def dimensionGridList(id_list, tile_dim) -> dict:
     dict{key: int val: tuple(int,int)}
     """
     imagedict = {}
-    for id in id_list:
-        col, row = tileMultiple(tile_dim, id.getSizeX(), id.getSizeY())
-        key_val = {id.getId():(col,row)}
+    for image in image_list:
+        print(str(image.getSizeX()) + " " + str(image.getSizeY()))
+        col, row = tileMultiple(tile_dim, image.getSizeX(), image.getSizeY())
+        if col < 1 or row < 1: continue
+        key_val = {image.getId():(image.getPrimaryPixels(),col,row)}
         imagedict.update(key_val)
     return imagedict
     
+
+def makeTileRGB(primary_pixels, x, y, tile_dim) -> np.ndarray:
+    """ from pixels create tile for each channel of RGB image and build new 
+    
+    Parameters
+    ----------
+    primary_pixels = _PixelsWrapper
+    x = int
+    y = int
+    tile_dim = int
+    Returns
+    --------
+    nd.array [x,y,z,c,t]
+    """
+    print("STARTING makeTileRGB")
+    tileR = get_tile(primary_pixels, y, x, tile_dim, c=0)
+    tileG = get_tile(primary_pixels, y, x, tile_dim, c=1)
+    tileB = get_tile(primary_pixels, y, x, tile_dim, c=2)
+    tileR = np.expand_dims(tileR, axis=(2,3,4))
+    tileG = np.expand_dims(tileG, axis=(2,3,4))
+    tileB = np.expand_dims(tileB, axis=(2,3,4))
+    np.append(tileR, tileG)
+    np.append(tileR, tileB)
+    return tileR
+
+def makeTileGScale(primary_pixels, x, y, tile_dim, size_c) -> np.ndarray:
+    """ from pixels create tile for each channel of multichannel image and build new 
+    
+    Parameters
+    ----------
+    primary_pixels = [int]
+    x = int
+    y = int
+    tile_dim = int
+    size_c = int (number of channels)
+    Returns
+    --------
+    nd.array [x,y,z,c,t]
+    """
+    tile_r = np.empty(shape=5)
+    for c in range(size_c):
+        tile = get_tile(primary_pixels, y, x, tile_dim, c)
+        tile = np.expand_dims(tile, axis=(2,3,4))
+        np.append(tile_r, tile)
+    return tile_r
+
 def breakUpImage(conn, imagedict, tile_dim):
     for key, value in imagedict.items():
         image = conn.getObject("Image", key)
