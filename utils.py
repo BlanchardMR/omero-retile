@@ -138,8 +138,8 @@ def makeTileRGB(primary_pixels, x, y, tile_dim) -> np.ndarray:
     tileR = np.expand_dims(tileR, axis=(2,3,4))
     tileG = np.expand_dims(tileG, axis=(2,3,4))
     tileB = np.expand_dims(tileB, axis=(2,3,4))
-    np.append(tileR, tileG)
-    np.append(tileR, tileB)
+    tileR = np.append(tileR, tileG, axis=3)
+    tileR = np.append(tileR, tileB, axis=3)
     return tileR
 
 def makeTileGScale(primary_pixels, x, y, tile_dim, size_c) -> np.ndarray:
@@ -162,6 +162,7 @@ def makeTileGScale(primary_pixels, x, y, tile_dim, size_c) -> np.ndarray:
         tile = np.expand_dims(tile, axis=(2,3,4))
         np.append(tile_r, tile)
     return tile_r
+
 
 def breakUpImage(conn, imagedict, tile_dim):
     for key, value in imagedict.items():

@@ -14,8 +14,13 @@ def main():
     imagedict = dimensionGridList(imagelist, TILE_DIM)
     for k,v in imagedict.items():
         print("k: " + str(k) + "  v: " + str(v))
-        tile = makeTileRGB(v[0], v[1]-1, v[2]-1, TILE_DIM)
-       
+        ez.post_roi(conn, k, roiTiler(TILE_DIM, v[2], v[1]))
+        for y in range(v[2]):
+            for x in range(v[1]):   
+                tile = makeTileRGB(v[0], x, y, TILE_DIM)
+                print(ez.post_image(conn, image=tile, image_name=str(k) +"_tile_" + str(x) 
+                +"_" + str(y), source_image_id=k, channel_list=[0,1,2] ))
+
 
 
     # image = conn.getObject("Image", 1654601)
