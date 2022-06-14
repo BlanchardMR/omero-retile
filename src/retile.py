@@ -1,11 +1,8 @@
 
 import sys, getopt
 import ezomero as ez
-from utils import tileSingleImage,getProjectImages
-import omero
+from utils import tileSingleImage,getProjectImages, test
 
-
-PROJECT_ID = 9152
 
 def main():
     project_id = ''
@@ -26,12 +23,11 @@ def main():
     if('-p' in options):
         print("Tiling all images in project...")
         project_id = arguments[options.index('-p')]
-        project = conn.getObject("Project", project_id )
-        print(type(project))
+        project = conn.getObject("Project", project_id)
         for dataset in project.listChildren():
-            image_list = getProjectImages(conn, ez.get_image_ids(conn, dataset==project_id))
-            for image in image_list:
-                tileSingleImage(conn, image, tile_dim, dataset)
+          image_list = getProjectImages(conn, ez.get_image_ids(conn, dataset=dataset.getId()))
+          for image in image_list:
+            tileSingleImage(conn, image, tile_dim, dataset.getId())
         conn.close()
         sys.exit(0)
                 
@@ -48,6 +44,7 @@ def main():
         print("Running image only. Image will be orphaned...")
         image_id = arguments[options.index('-i')]
         image = conn.getObject("Image", image_id)
+        #test(conn, image)
         tileSingleImage(conn, image, tile_dim)
         conn.close()
         sys.exit(0)

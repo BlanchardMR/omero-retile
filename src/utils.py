@@ -192,4 +192,9 @@ def tileSingleImage(conn, image, tile_dim=2048, dataset=None):
                 , dim_order="xyzct" 
                 )
  
-
+## TEST TO SHOW TRANSPOSITION ISSUE
+def test(conn, image):
+    pixels = image.getPrimaryPixels()
+    tile = pixels.getTile(0, 1, 0,(2048,0,2048,2048))
+    tile = np.expand_dims(tile, axis=(2,3,4))
+    ez.post_image(conn, tile, "test", dim_order="xyzct")
