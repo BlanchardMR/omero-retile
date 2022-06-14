@@ -1,56 +1,57 @@
 
 import sys, getopt
-import numpy as np
 import ezomero as ez
-from utils import tileSingleImage, roiTiler, tileMultiple, getProjectPixels, dimensionGridList,getProjectImages, makeTilesRGB
-from ezomero import rois
-from math import ceil
+from utils import tileSingleImage,getProjectImages
 import omero
 
 
 PROJECT_ID = 9152
 
-def main(argv):
+def main():
     project_id = ''
     image_id = ''
     dataset = ''
     tile_dim = 2048
-    conn = ez.connect(config_path=".")  #config path is lo
+    conn = ez.connect(group= "Neurobiology Imaging Facility",config_path=".")  #config path is lo
     ##need to setup combined argument outcomes ex. : -p + -d + -i
+
     try:
-        opts, args = getopt.getopt(argv,"tpdi:",["tile_dim=","project_id=", "dataset=","image_id="])
+        opts, args = getopt.getopt(sys.argv[1:],"t:p:d:i:",["tile_dim=","project_id=", "dataset=","image_id="])
     except getopt.GetoptError:
-      print('retile.py -p <project_id> -d <dataset> -i <image id>')
+      print('retile.py -p <project id> | -d <dataset id> | -d <dataset id> -i <image id> |  -i <image id> ')
       sys.exit(2)
-    for opt, arg in opts:
-      if opt == '-t':
-         print ('dimension set to', arg)
-      elif opt == '-p':
-        project_id = arg
-      elif opt == '-d':
-        dataset = arg
-      elif opt == '-i':
-        image_id = arg
+
+    options, arguments = zip(*opts)
+
+    if('-p' in options):
+        print("Tiling all images in project...")
+        project_id = arguments[options.index('-p')]
+        project = conn.getObject("Project", project_id )
+        print(type(project))
+        for dataset in project.listChildren():
+            image_list = getProjectImages(conn, ez.get_image_ids(conn, dataset==project_id))
+            for image in image_list:
+                tileSingleImage(conn, image, tile_dim, dataset)
+        conn.close()
+        sys.exit(0)
+                
+    if('-d' in options and '-i' in options):
+        print("Running single image only and placing into dataset...")
+        image_id = arguments[options.index('-i')]
+        dataset = int(arguments[options.index('-d')])
         image = conn.getObject("Image", str(image_id))
+        tileSingleImage(conn, image, tile_dim, dataset )
+        conn.close()
+        sys.exit(0)
+
+    if ('-i' in options):
+        print("Running image only. Image will be orphaned...")
+        image_id = arguments[options.index('-i')]
+        image = conn.getObject("Image", image_id)
         tileSingleImage(conn, image, tile_dim)
-
-    image_ids = ez.get_image_ids(conn, dataset=18352)
-    imagelist = getProjectImages(conn, image_ids)
-    imagedict = dimensionGridList(imagelist, tile_dim)
-
-    #below will be turned into upload function
-    for k,v in imagedict.items():
-        print("k: " + str(k) + "  v: " + str(v))
-        ez.post_roi(conn, k, roiTiler(tile_dim, v[2], v[1]))
-        for y in range(v[2]):
-            for x in range(v[1]):   
-                tile = makeTilesRGB(v[0], x, y, tile_dim)
-                print(ez.post_image(conn, image=np.flipud(np.rot90(tile, k=1, axes=(0,1))), image_name=str(k) +"_tile_" + str(y) +"_" + str(x), source_image_id=k, channel_list=[0,1,2], dim_order="xyzct" ))
-
-
-    conn.close()
-
+        conn.close()
+        sys.exit(0)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

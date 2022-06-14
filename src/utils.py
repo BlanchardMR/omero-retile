@@ -166,7 +166,17 @@ def makeTileGScale(primary_pixels, x, y, tile_dim, size_c) -> np.ndarray:
         np.append(tile_r, tile)
     return tile_r
 
-def tileSingleImage(conn, image, tile_dim):
+def tileSingleImage(conn, image, tile_dim=2048, dataset=None):
+    """ create single tileset and write to dataset or orphaned images
+    
+    Parameters
+    ----------
+    conn = Omero.Blitzgateway
+    image = Omero._ImageWrapper
+    tile_dim = int
+    dataset = int
+
+    """
     id = image.getId()
     col_x, col_y = tileMultiple(image, tile_dim)
     for y in range(col_y):
@@ -177,6 +187,7 @@ def tileSingleImage(conn, image, tile_dim):
                 , image=np.flipud(np.rot90(tile, k=1, axes=(0,1)))
                 , image_name=str(id) +"_tile_" + str(y) +"_" + str(x)
                 , source_image_id=id
+                , dataset_id=dataset
                 , channel_list=[0,1,2]
                 , dim_order="xyzct" 
                 )
