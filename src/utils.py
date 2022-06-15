@@ -2,6 +2,7 @@
 import numpy as np
 import ezomero as ez
 from ezomero import rois
+import time
 
 
 def tileMultiple(image, tile_dim) -> tuple:
@@ -135,15 +136,20 @@ def makeTilesRGB(image, x, y, tile_dim) -> np.ndarray:
     nd.array [x,y,z,c,t]
     """
     print(("creating tile x:%d, y:%d") %(x, y))
-    tileR = get_tile(image, y, x, tile_dim, c=0)
-    tileG = get_tile(image, y, x, tile_dim, c=1)
-    tileB = get_tile(image, y, x, tile_dim, c=2)
-    tileR = np.expand_dims(tileR, axis=(2,3,4))
-    tileG = np.expand_dims(tileG, axis=(2,3,4))
-    tileB = np.expand_dims(tileB, axis=(2,3,4))
-    tileR = np.append(tileR, tileG, axis=3)
-    tileR = np.append(tileR, tileB, axis=3)
-    return tileR
+    start_time = time.time()
+    size_c = image.getSizeC()
+    tile_list = []
+    expanded_tile_list = []
+    for c in range(size_c):
+        tile_list.append(get_tile(image, y, x, tile_dim, c=c))
+    print("getTile() time: %s" % (time.time() - start_time))
+    expanded_tile_list = list(map(lambda x: np.expand_dims(x, axis=(2,3,4)), tile_list))
+    print("expand_dims time: %s" % (time.time() - start_time))
+    out_tile = expanded_tile_list.pop(0)
+    for tile in expanded_tile_list:
+        out_tile = np.append(out_tile, tile, axis=3)
+    print("append time: %s" % (time.time() - start_time))
+    return out_tile
 
 def makeTileGScale(primary_pixels, x, y, tile_dim, size_c) -> np.ndarray:
     """ from pixels create tile for each channel of multichannel image and build new 
@@ -177,20 +183,23 @@ def tileSingleImage(conn, image, tile_dim=2048, dataset=None):
     dataset = int
 
     """
+    start_time = time.time()
     id = image.getId()
     col_x, col_y = tileMultiple(image, tile_dim)
+    print("tileMultiple time: %s" % (time.time() - start_time))
     for y in range(col_y):
         for x in range(col_x):
             tile = makeTilesRGB(image, x, y, tile_dim)
             ez.post_image(
                   conn=conn
                 , image=np.flipud(np.rot90(tile, k=1, axes=(0,1)))
-                , image_name=str(id) +"_tile_" + str(y) +"_" + str(x)
+                , image_name=image.getName() +"_tile_" + str(y) +"_" + str(x)
                 , source_image_id=id
                 , dataset_id=dataset
                 , channel_list=[0,1,2]
                 , dim_order="xyzct" 
                 )
+            print("postImage: %s" % (time.time() - start_time))
  
 ## TEST TO SHOW TRANSPOSITION ISSUE
 def test(conn, image):

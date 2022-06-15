@@ -2,9 +2,12 @@
 import sys, getopt
 import ezomero as ez
 from utils import tileSingleImage,getProjectImages, test
+import time
+
 
 
 def main():
+    start_time = time.time()
     project_id = ''
     image_id = ''
     dataset = ''
@@ -29,6 +32,7 @@ def main():
           for image in image_list:
             tileSingleImage(conn, image, tile_dim, dataset.getId())
         conn.close()
+        print("--- %s seconds ---" % (time.time() - start_time))
         sys.exit(0)
                 
     if('-d' in options and '-i' in options):
@@ -38,17 +42,21 @@ def main():
         image = conn.getObject("Image", str(image_id))
         tileSingleImage(conn, image, tile_dim, dataset )
         conn.close()
+        print("--- %s seconds ---" % (time.time() - start_time))
         sys.exit(0)
 
     if ('-i' in options):
         print("Running image only. Image will be orphaned...")
         image_id = arguments[options.index('-i')]
         image = conn.getObject("Image", image_id)
-        #test(conn, image)
+        test(conn, image)
         tileSingleImage(conn, image, tile_dim)
         conn.close()
+        print("--- %s seconds ---" % (time.time() - start_time))
         sys.exit(0)
 
 
 if __name__ == "__main__":
     main()
+
+
