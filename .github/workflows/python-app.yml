@@ -38,4 +38,4 @@ jobs:
       id: test
       working-directory: ./
       run: |
-        python -m pytest tests
+        python -m pytest --import-mode=append tests/
